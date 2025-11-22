@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"snapup/internal/models"
-	"snapup/internal/screenshot"
+
+	"github.com/gotoailab/snapup/internal/models"
+	"github.com/gotoailab/snapup/internal/screenshot"
 )
 
 // Handler HTTP 处理器

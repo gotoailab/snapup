@@ -16,19 +16,33 @@ SnapUp 是一个基于 Go 和 ChromeDP 开发的高性能网页截图服务，�
 
 ### 使用 Docker（推荐）
 
-这是最简单的部署方式，Docker 会自动安装 Chrome 和所有依赖。
+这是最简单的部署方式，Docker Compose 会自动启动 Chrome headless 容器和应用服务。
 
 ```bash
 # 克隆项目
 git clone <repository-url>
 cd snapup
 
-# 构建并运行
+# 构建并运行（会自动启动 Chrome 和 SnapUp 服务）
 docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
 
 # 访问服务
 # 浏览器打开 http://localhost:8080
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
 ```
+
+**架构说明**：
+- `chrome` 服务：运行 Chrome headless 浏览器，监听 9222 端口
+- `snapup` 服务：运行主应用，通过 WebSocket 连接到 Chrome 容器
+- 自动健康检查，确保 Chrome 启动后才启动主服务
 
 ### 本地运行
 
@@ -71,6 +85,33 @@ make run
 5. **访问服务**
 
 浏览器打开 `http://localhost:8080`
+
+## 配置
+
+### 环境变量
+
+| 变量名 | 说明 | 默认值 | 示例 |
+|--------|------|--------|------|
+| `PORT` | 服务监听端口 | `8080` | `8080` |
+| `CHROME_WS_URL` | Chrome WebSocket URL（用于 Docker 部署） | 空（使用本地 Chrome） | `ws://chrome:9222` |
+
+**Docker 部署**：`CHROME_WS_URL` 会自动配置为 `ws://chrome:9222`，连接到 Chrome 容器
+
+**本地部署**：不设置 `CHROME_WS_URL`，程序会自动启动本地 Chrome 实例
+
+### Docker Compose 配置
+
+默认的 `docker-compose.yml` 包含两个服务：
+
+1. **chrome** - Chrome headless 容器
+   - 端口：9222（WebSocket 调试端口）
+   - 内存：2GB shared memory
+   - 健康检查：自动验证 Chrome 是否就绪
+
+2. **snapup** - 主应用服务
+   - 端口：8080（HTTP 服务）
+   - 依赖：等待 Chrome 容器健康后启动
+   - 卷挂载：`./screenshots` 目录用于存储截图
 
 ## 使用说明
 

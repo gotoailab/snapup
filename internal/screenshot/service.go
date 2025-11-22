@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"snapup/internal/models"
+
+	"github.com/gotoailab/snapup/internal/models"
 
 	"github.com/google/uuid"
 )

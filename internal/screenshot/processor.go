@@ -8,7 +8,8 @@ import (
 	"image/draw"
 	"image/png"
 	"math"
-	"snapup/internal/models"
+
+	"github.com/gotoailab/snapup/internal/models"
 )
 
 // Processor 图片处理器接口

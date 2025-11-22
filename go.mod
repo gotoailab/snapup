@@ -1,4 +1,4 @@
-module snapup
+module github.com/gotoailab/snapup
 
 go 1.21
 

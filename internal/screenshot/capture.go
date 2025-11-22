@@ -3,8 +3,10 @@ package screenshot
 import (
 	"context"
 	"fmt"
-	"snapup/internal/models"
+	"os"
 	"time"
+
+	"github.com/gotoailab/snapup/internal/models"
 
 	"github.com/chromedp/chromedp"
 )
@@ -15,11 +17,15 @@ type Capturer interface {
 }
 
 // ChromeCapture Chrome 截图捕获器
-type ChromeCapture struct{}
+type ChromeCapture struct {
+	chromeWSURL string
+}
 
 // NewChromeCapture 创建 Chrome 截图捕获器
 func NewChromeCapture() *ChromeCapture {
-	return &ChromeCapture{}
+	return &ChromeCapture{
+		chromeWSURL: os.Getenv("CHROME_WS_URL"),
+	}
 }
 
 // Capture 执行截图
@@ -27,21 +33,34 @@ func (c *ChromeCapture) Capture(ctx context.Context, req models.ScreenshotReques
 	// 获取设备配置
 	deviceConfig := models.GetDeviceConfig(req.Device)
 
-	// 创建 Chrome 上下文
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", true),
-		chromedp.Flag("disable-gpu", true),
-		chromedp.Flag("no-sandbox", true),
-		chromedp.Flag("disable-dev-shm-usage", true),
-		chromedp.Flag("disable-setuid-sandbox", true),
-		chromedp.WindowSize(int(deviceConfig.Width), int(deviceConfig.Height)),
-	)
+	var taskCtx context.Context
+	var cancel context.CancelFunc
 
-	allocCtx, cancel := chromedp.NewExecAllocator(ctx, opts...)
-	defer cancel()
+	// 根据是否配置了远程 Chrome 来创建上下文
+	if c.chromeWSURL != "" {
+		// 使用远程 Chrome（Docker 容器）
+		allocCtx, allocCancel := chromedp.NewRemoteAllocator(ctx, c.chromeWSURL)
+		defer allocCancel()
 
-	taskCtx, cancel := chromedp.NewContext(allocCtx)
-	defer cancel()
+		taskCtx, cancel = chromedp.NewContext(allocCtx)
+		defer cancel()
+	} else {
+		// 使用本地 Chrome
+		opts := append(chromedp.DefaultExecAllocatorOptions[:],
+			chromedp.Flag("headless", true),
+			chromedp.Flag("disable-gpu", true),
+			chromedp.Flag("no-sandbox", true),
+			chromedp.Flag("disable-dev-shm-usage", true),
+			chromedp.Flag("disable-setuid-sandbox", true),
+			chromedp.WindowSize(int(deviceConfig.Width), int(deviceConfig.Height)),
+		)
+
+		allocCtx, allocCancel := chromedp.NewExecAllocator(ctx, opts...)
+		defer allocCancel()
+
+		taskCtx, cancel = chromedp.NewContext(allocCtx)
+		defer cancel()
+	}
 
 	// 设置超时
 	taskCtx, cancel = context.WithTimeout(taskCtx, 30*time.Second)

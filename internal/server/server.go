@@ -6,8 +6,9 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
-	"snapup/internal/screenshot"
 	"time"
+
+	"github.com/gotoailab/snapup/internal/screenshot"
 )
 
 //go:embed static/*
