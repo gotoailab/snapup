@@ -11,6 +11,7 @@ SnapUp 是一个基于 Go 和 ChromeDP 开发的高性能网页截图服务，�
 - 📄 **全页截图**: 支持捕获完整网页内容
 - 🐳 **Docker 支持**: 提供完整的 Docker 部署方案
 - 💻 **现代化界面**: 使用 Vue 3 和 Tailwind CSS 构建的美观界面
+- 🤖 **MCP 支持**: 支持 Model Context Protocol，可作为大模型工具使用
 
 ## 快速开始
 
@@ -85,6 +86,37 @@ make run
 5. **访问服务**
 
 浏览器打开 `http://localhost:8080`
+
+### MCP 模式（AI 工具集成）
+
+SnapUp 支持作为 MCP (Model Context Protocol) 服务器运行，可以被 Claude Desktop 等 AI 助手调用，为大模型提供网页截图能力。
+
+```bash
+# 运行 MCP 模式
+./snapup -mode=mcp -output ./screenshots
+
+# 或使用 make
+make run-mcp
+```
+
+**配置 Claude Desktop:**
+
+编辑配置文件（macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`）：
+
+```json
+{
+  "mcpServers": {
+    "snapup": {
+      "command": "/path/to/snapup",
+      "args": ["-mode=mcp", "-output=/path/to/screenshots"]
+    }
+  }
+}
+```
+
+配置完成后，重启 Claude Desktop，你就可以在对话中要求 Claude 帮你截取网页了！
+
+**详细使用指南**: 查看 [MCP_USAGE.md](./MCP_USAGE.md) 了解完整的 MCP 功能和使用方法。
 
 ## 配置
 
@@ -180,6 +212,10 @@ snapup/
 │   └── snapup/          # 主程序入口
 │       └── main.go
 ├── internal/
+│   ├── mcp/             # MCP 服务器实现
+│   │   ├── types.go     # MCP 协议类型
+│   │   ├── server.go    # MCP 服务器
+│   │   └── tools.go     # 截图工具封装
 │   ├── models/          # 数据模型
 │   │   └── types.go
 │   ├── screenshot/      # 截图核心功能
@@ -197,7 +233,8 @@ snapup/
 ├── docker-compose.yml  # Docker Compose 配置
 ├── Makefile           # Make 命令
 ├── go.mod             # Go 模块定义
-└── README.md          # 项目说明
+├── README.md          # 项目说明
+└── MCP_USAGE.md       # MCP 使用指南
 ```
 
 ## 开发指南
@@ -208,8 +245,11 @@ snapup/
 # 构建
 make build
 
-# 运行
+# 运行（HTTP 模式）
 make run
+
+# 运行（MCP 模式）
+make run-mcp
 
 # 清理
 make clean

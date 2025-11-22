@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "snapup": {
+      "command": "/path/to/snapup",
+      "args": [
+        "-mode=mcp",
+        "-output=/path/to/screenshots"
+      ]
+    }
+  }
+}
+

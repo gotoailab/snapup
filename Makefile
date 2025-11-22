@@ -1,12 +1,16 @@
-.PHONY: build run clean docker docker-run docker-stop test
+.PHONY: build run run-mcp clean docker docker-run docker-stop test
 
 # 构建应用
 build:
 	go build -o snapup ./cmd/snapup
 
-# 运行应用
+# 运行应用（HTTP 模式）
 run:
-	go run ./cmd/snapup/main.go
+	go run ./cmd/snapup/main.go -mode=http
+
+# 运行应用（MCP 模式）
+run-mcp:
+	go run ./cmd/snapup/main.go -mode=mcp
 
 # 清理
 clean:
@@ -46,7 +50,8 @@ lint:
 help:
 	@echo "可用命令:"
 	@echo "  make build       - 构建应用"
-	@echo "  make run         - 运行应用"
+	@echo "  make run         - 运行应用（HTTP 模式）"
+	@echo "  make run-mcp     - 运行应用（MCP 模式）"
 	@echo "  make clean       - 清理构建文件"
 	@echo "  make docker      - 构建 Docker 镜像"
 	@echo "  make docker-run  - 运行 Docker 容器"
