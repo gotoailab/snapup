@@ -6,7 +6,7 @@
     <title>SnapUp - Professional Screenshot Tool</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Lobster&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
@@ -349,7 +349,7 @@
 <body>
     <div id="app" v-cloak>
         <!-- 头部 -->
-        <header class="bg-white border-b border-gray-200">
+        <header class="bg-white border-b border-gray-200 relative z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-3">
@@ -363,14 +363,48 @@
                            <path d="M6 4L7.5 2H12.5L14 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
                         </g>
                      </svg>
-                     <h1 class="text-xl font-bold text-gray-900">SnapUp</h1>
+                     <h1 class="text-3xl font-normal text-gray-900" style="font-family: 'Lobster', cursive; letter-spacing: 0.02em;">SnapUp</h1>
                   </div>
-                  <nav class="flex items-center space-x-8">
-                     <a href="https://github.com/gotoailab/snapup" target="_blank" class="text-gray-600 hover:text-gray-900">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                           <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"></path>
-                        </svg>
-                     </a>
+                  <nav class="flex items-center space-x-6">
+                     <!-- 语言切换 -->
+                     <div class="relative lang-dropdown">
+                        <button 
+                           @click.stop="langMenuOpen = !langMenuOpen"
+                           class="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition text-gray-700 cursor-pointer"
+                        >
+                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                           </svg>
+                           <span class="text-sm font-medium">{{ currentLang === 'en' ? 'EN' : currentLang === 'zh-CN' ? '简' : '繁' }}</span>
+                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                           </svg>
+                        </button>
+                        
+                        <div v-show="langMenuOpen" class="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-gray-200 py-1" style="z-index: 9999; pointer-events: auto;">
+                           <button 
+                              @click="switchLang('en', $event)"
+                              type="button"
+                              :class="['w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition cursor-pointer', currentLang === 'en' ? 'text-blue-600 font-medium' : 'text-gray-700']"
+                           >
+                              English
+                           </button>
+                           <button 
+                              @click="switchLang('zh-CN', $event)"
+                              type="button"
+                              :class="['w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition cursor-pointer', currentLang === 'zh-CN' ? 'text-blue-600 font-medium' : 'text-gray-700']"
+                           >
+                              简体中文
+                           </button>
+                           <button 
+                              @click="switchLang('zh-TW', $event)"
+                              type="button"
+                              :class="['w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition cursor-pointer', currentLang === 'zh-TW' ? 'text-blue-600 font-medium' : 'text-gray-700']"
+                           >
+                              繁體中文
+                           </button>
+                        </div>
+                     </div>                     
                   </nav>
                </div>
             </div>
@@ -381,24 +415,21 @@
             <!-- 标题区 -->
             <div class="max-w-4xl mx-auto text-center mb-12">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                    Website Screenshot Generator<br>
-                    <span class="text-gray-500">Made Simple</span>
+                    {{ t.title }}
                 </h2>
                 <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                    Generate professional website screenshots from any URL with our free online tool. 
-                    Create stunning desktop, tablet, and mobile device screenshots for presentations, 
-                    portfolios, and client demos in seconds.
+                    {{ t.subtitle }}
                 </p>
             </div>
 
             <!-- 输入区 -->
             <div class="max-w-2xl mx-auto mb-16">
                 <div class="bg-white rounded-2xl shadow-lg p-8">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-6">Generate Screenshot</h3>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6">{{ t.generateBtn }}</h3>
                     
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-3">
-                            Copy and paste your URL here:
+                            {{ t.urlTipLabel }}
                         </label>
                         <div class="relative">
                             <div class="url-input rounded-xl flex items-center bg-white overflow-hidden">
@@ -406,7 +437,7 @@
                                 <div class="protocol-dropdown">
                                     <div 
                                         @click.stop="protocolDropdownOpen = !protocolDropdownOpen"
-                                        :class="['protocol-button px-4 py-4 bg-gray-50 text-gray-900 font-semibold', protocolDropdownOpen ? 'open' : '']"
+                                        :class="['protocol-button px-4 py-3 bg-gray-50 text-gray-900 font-semibold', protocolDropdownOpen ? 'open' : '']"
                                     >
                                         <span>{{ protocol }}</span>
                                         <svg 
@@ -423,8 +454,8 @@
                                 <input
                                     v-model="urlInput"
                                     type="text"
-                                    placeholder="www.example.com"
-                                    class="flex-1 px-4 py-4 outline-none text-gray-900"
+                                    :placeholder="t.urlPlaceholder"
+                                    class="flex-1 px-4 py-3 outline-none text-gray-900"
                                     @keyup.enter="generateScreenshots"
                                     @click="closeProtocolDropdown"
                                 />
@@ -450,15 +481,15 @@
                     <!-- 风格选择 -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-3">
-                            Screenshot Style:
+                            {{ t.styleLabel }}:
                         </label>
-                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <button
                                 v-for="style in styleOptions"
                                 :key="style.value"
                                 @click="form.style = style.value"
                                 :class="[
-                                    'style-btn px-4 py-3 rounded-xl font-semibold text-sm',
+                                    'style-btn px-4 py-2 rounded-xl font-semibold text-sm whitespace-nowrap',
                                     form.style === style.value ? 'active' : 'bg-white hover:bg-gray-50'
                                 ]"
                             >
@@ -498,7 +529,7 @@
                     <!-- 高级选项 -->
                     <details class="mb-6 bg-gray-50 rounded-xl">
                         <summary class="p-4 cursor-pointer font-medium text-gray-900 hover:bg-gray-100 rounded-xl">
-                            Advanced Options
+                            {{ t.advancedOptions }}
                         </summary>
                         <div class="px-4 pb-4 space-y-4">
                             <div class="flex items-center space-x-3">
@@ -509,14 +540,14 @@
                                     class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
                                 />
                                 <label for="fullPage" class="text-sm text-gray-700">
-                                    Full page screenshot
+                                    {{ t.fullPage }}
                                 </label>
                             </div>
                             
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm text-gray-700 mb-2">
-                                        Delay (ms)
+                                        {{ t.delay }}
                                     </label>
                                     <input
                                         v-model.number="form.delay"
@@ -530,7 +561,7 @@
 
                                 <div>
                                     <label class="block text-sm text-gray-700 mb-2">
-                                        Quality (1-100)
+                                        {{ t.quality }}
                                     </label>
                                     <input
                                         v-model.number="form.quality"
@@ -547,10 +578,10 @@
                     <button
                         @click="generateScreenshots"
                         :disabled="loading || !urlInput"
-                        class="btn-generate w-full py-4 rounded-xl text-white font-bold text-lg"
+                        class="btn-generate w-full py-3 rounded-xl text-white font-bold text-lg"
                     >
-                        <span v-if="loading">Generating...</span>
-                        <span v-else>Generate</span>
+                        <span v-if="loading">{{ t.generating }}</span>
+                        <span v-else>{{ t.generateBtn }}</span>
                     </button>
                 </div>
 
@@ -578,13 +609,13 @@
             <!-- 预览区 -->
             <div id="preview-section" class="max-w-6xl mx-auto">
                 <div class="text-center mb-8">
-                    <h3 class="text-3xl font-bold text-gray-900 mb-2">Generated Screenshots</h3>
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">{{ t.generatedScreenshots }}</h3>
                 </div>
 
                 <!-- 加载状态 -->
                 <div v-if="loading" class="flex flex-col items-center justify-center py-20">
                     <div class="loading-spinner mb-4"></div>
-                    <p class="text-gray-600 font-medium">Generating screenshots...</p>
+                    <p class="text-gray-600 font-medium">{{ t.generating }}</p>
                 </div>
 
                 <!-- 结果展示 -->
@@ -618,7 +649,7 @@
                                 <button
                                     @click="copyImageUrl(result.url)"
                                     class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-gray-700"
-                                    title="Copy link"
+                                    :title="t.copyLink"
                                 >
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
@@ -629,7 +660,7 @@
                                     :download="getDownloadFilename(result)"
                                     class="btn-download px-6 py-2 rounded-lg text-white font-bold"
                                 >
-                                    Download PNG
+                                    {{ t.download }}
                                 </a>
                             </div>
                         </div>
@@ -643,36 +674,44 @@
                             />
                         </div>
                         <p class="text-xs text-gray-500 mt-3 text-center">
-                            点击图片查看大图 · 下载的图片为完整尺寸
+                            {{ t.clickToView }}
                         </p>
                     </div>
                 </div>
 
                 <!-- 空状态 -->
-                <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="preview-card rounded-2xl p-8 text-center">
                         <svg class="device-icon" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/>
                         </svg>
-                        <h4 class="font-bold text-gray-900 mb-1">Desktop</h4>
+                        <h4 class="font-bold text-gray-900 mb-1">{{ t.desktop}}</h4>
+                        <p class="text-sm text-gray-500">(1920 × 1080)</p>
+                        <p class="text-xs text-gray-400 mt-3">{{ t.emptyDesktop }}</p>
+                    </div>
+                    <div class="preview-card rounded-2xl p-8 text-center">
+                        <svg class="device-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
+                        </svg>
+                        <h4 class="font-bold text-gray-900 mb-1">{{ t.laptop }}</h4>
                         <p class="text-sm text-gray-500">(1440 × 900)</p>
-                        <p class="text-xs text-gray-400 mt-3">Desktop screenshot will appear here</p>
+                        <p class="text-xs text-gray-400 mt-3">{{ t.emptyLaptop }}</p>
                     </div>
                     <div class="preview-card rounded-2xl p-8 text-center">
                         <svg class="device-icon" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 1.99-.9 1.99-2L23 6c0-1.1-.9-2-2-2zm-2 14H5V6h14v12z"/>
                         </svg>
-                        <h4 class="font-bold text-gray-900 mb-1">Tablet</h4>
+                        <h4 class="font-bold text-gray-900 mb-1">{{ t.tablet }}</h4>
                         <p class="text-sm text-gray-500">(768 × 1024)</p>
-                        <p class="text-xs text-gray-400 mt-3">Tablet screenshot will appear here</p>
+                        <p class="text-xs text-gray-400 mt-3">{{ t.emptyTablet }}</p>
                     </div>
                     <div class="preview-card rounded-2xl p-8 text-center">
                         <svg class="device-icon" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
                         </svg>
-                        <h4 class="font-bold text-gray-900 mb-1">Mobile</h4>
-                        <p class="text-sm text-gray-500">(390 × 844)</p>
-                        <p class="text-xs text-gray-400 mt-3">Mobile screenshot will appear here</p>
+                        <h4 class="font-bold text-gray-900 mb-1">{{ t.mobile }}</h4>
+                        <p class="text-sm text-gray-500">(375 × 812)</p>
+                        <p class="text-xs text-gray-400 mt-3">{{ t.emptyMobile }}</p>
                     </div>
                 </div>
             </div>
@@ -699,7 +738,7 @@
 
         <!-- 页脚 -->
         <footer class="bg-white border-t border-gray-200 mt-20">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                         <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none">
@@ -711,11 +750,14 @@
                                 <path d="M6 4L7.5 2H12.5L14 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                             </g>
                         </svg>
-                        <span class="text-sm text-gray-600">© 2025 SnapUp. All rights reserved.</span>
+                        <span class="text-sm text-gray-600">{{ t.footer }}</span>
                     </div>
                     <div class="flex items-center space-x-6">
-                        <a href="#" class="text-sm text-gray-600 hover:text-gray-900">Privacy Policy</a>
-                        <a href="#" class="text-sm text-gray-600 hover:text-gray-900">Terms & Conditions</a>
+                        <a href="https://github.com/gotoailab/snapup" target="_blank" class="text-sm text-gray-600 hover:text-gray-900">Github</a>
+                        <span class="text-gray-300">·</span>
+                        <a href="#" class="text-sm text-gray-600 hover:text-gray-900">{{ t.privacy }}</a>
+                        <span class="text-gray-300">·</span>
+                        <a href="#" class="text-sm text-gray-600 hover:text-gray-900">{{ t.terms }}</a>
                     </div>
                 </div>
             </div>
@@ -728,6 +770,8 @@
         createApp({
             data() {
                 return {
+                    currentLang: localStorage.getItem('lang') || 'en',
+                    langMenuOpen: false,
                     protocol: 'https://',
                     protocolDropdownOpen: false,
                     urlInput: '',
@@ -738,12 +782,6 @@
                         quality: 90,
                         background: '#f0f2f5'
                     },
-                    styleOptions: [
-                        { value: 'none', label: 'None', description: 'Clean screenshot without frame' },
-                        { value: 'browser', label: 'Browser', description: 'Browser window frame' },
-                        { value: 'shadow', label: 'Shadow', description: 'Floating shadow effect' },
-                        { value: 'device', label: 'Device Frame', description: 'Device mockup with frame' }
-                    ],
                     devices: [],
                     styles: [],
                     loading: false,
@@ -751,27 +789,165 @@
                     success: null,
                     resultImages: [],
                     imageModalOpen: false,
-                    modalImageUrl: ''
+                    modalImageUrl: '',
+                    translations: {
+                        en: {
+                            title: 'Professional Screenshot Tool',
+                            subtitle: 'Create beautiful website screenshots with multiple device sizes and styles',
+                            urlPlaceholder: 'example.com',
+                            urlLabel: 'Website URL',
+                            styleLabel: 'Screenshot Style',
+                            advancedOptions: 'Advanced Options',
+                            fullPage: 'Full Page Screenshot',
+                            delay: 'Delay (ms)',
+                            quality: 'Image Quality',
+                            background: 'Background Color',
+                            generateBtn: 'Generate Screenshot',
+                            generating: 'Generating screenshots...',
+                            urlTipLabel: 'Copy and paste your URL here:',
+                            generatedScreenshots: 'Generated Screenshots',
+                            desktop: 'Desktop',
+                            laptop: 'Laptop',
+                            tablet: 'Tablet',
+                            mobile: 'Mobile',
+                            clickToView: 'Click image to view larger · Downloaded image will be full size',
+                            copyLink: 'Copy link',
+                            download: 'Download PNG',
+                            emptyDesktop: 'Desktop screenshot will appear here',
+                            emptyLaptop: 'Laptop screenshot will appear here',
+                            emptyTablet: 'Tablet screenshot will appear here',
+                            emptyMobile: 'Mobile screenshot will appear here',
+                            footer: '© 2025 SnapUp. All rights reserved.',
+                            privacy: 'Privacy Policy',
+                            terms: 'Terms of Service',
+                            styles: {
+                                none: { label: 'None', desc: 'Clean screenshot without frame' },
+                                browser: { label: 'Browser', desc: 'Browser window frame' },
+                                shadow: { label: 'Shadow', desc: 'Floating shadow effect' },
+                                device: { label: 'Device Frame', desc: 'Device mockup with frame' }
+                            }
+                        },
+                        'zh-CN': {
+                            title: '专业网页截图工具',
+                            subtitle: '创建精美的网站截图，支持多种设备尺寸和样式',
+                            urlPlaceholder: 'example.com',
+                            urlLabel: '网站地址',
+                            styleLabel: '截图风格',
+                            advancedOptions: '高级选项',
+                            fullPage: '全页截图',
+                            urlTipLabel: '复制并粘贴您的URL：',
+                            generatedScreenshots: '生成的截图',
+                            delay: '延迟时间 (毫秒)',
+                            quality: '图片质量',
+                            background: '背景颜色',
+                            generateBtn: '生成截图',
+                            generating: '正在生成截图...',
+                            clickToView: '点击图片查看大图 · 下载的图片为完整尺寸',
+                            copyLink: '复制链接',
+                            download: '下载 PNG',
+                            desktop: '桌面',
+                            laptop: '笔记本',
+                            tablet: '平板',
+                            mobile: '手机',
+                            emptyDesktop: '桌面截图将显示在这里',
+                            emptyLaptop: '笔记本截图将显示在这里',
+                            emptyTablet: '平板截图将显示在这里',
+                            emptyMobile: '手机截图将显示在这里',
+                            footer: '© 2025 SnapUp. 版权所有.',
+                            privacy: '隐私政策',
+                            terms: '服务条款',
+                            styles: {
+                                none: { label: '无样式', desc: '纯净截图，无装饰' },
+                                browser: { label: '浏览器', desc: '浏览器窗口边框' },
+                                shadow: { label: '阴影', desc: '浮动阴影效果' },
+                                device: { label: '设备边框', desc: '设备模型边框' }
+                            }
+                        },
+                        'zh-TW': {
+                            title: '專業網頁截圖工具',
+                            subtitle: '創建精美的網站截圖，支援多種裝置尺寸和樣式',
+                            urlPlaceholder: 'example.com',
+                            urlLabel: '網站地址',
+                            styleLabel: '截圖風格',
+                            advancedOptions: '進階選項',
+                            urlTipLabel: '複製並貼上您的URL：',
+                            fullPage: '全頁截圖',
+                            generatedScreenshots: '生成的截圖',
+                            desktop: '桌面',
+                            laptop: '筆記本',
+                            tablet: '平板',
+                            mobile: '手機',
+                            delay: '延遲時間 (毫秒)',
+                            quality: '圖片品質',
+                            background: '背景顏色',
+                            generateBtn: '生成截圖',
+                            generating: '正在生成截圖...',
+                            clickToView: '點擊圖片查看大圖 · 下載的圖片為完整尺寸',
+                            copyLink: '複製連結',
+                            download: '下載 PNG',
+                            emptyDesktop: '桌面截圖將顯示在這裡',
+                            emptyLaptop: '筆記本截圖將顯示在這裡',
+                            emptyTablet: '平板截圖將顯示在這裡',
+                            emptyMobile: '手機截圖將顯示在這裡',
+                            footer: '© 2025 SnapUp. 版權所有.',
+                            privacy: '隱私政策',
+                            terms: '服務條款',
+                            styles: {
+                                none: { label: '無樣式', desc: '純淨截圖，無裝飾' },
+                                browser: { label: '瀏覽器', desc: '瀏覽器視窗邊框' },
+                                shadow: { label: '陰影', desc: '浮動陰影效果' },
+                                device: { label: '裝置邊框', desc: '裝置模型邊框' }
+                            }
+                        }
+                    }
                 };
             },
             computed: {
                 fullUrl() {
                     return this.protocol + this.urlInput;
+                },
+                t() {
+                    return this.translations[this.currentLang] || this.translations.en;
+                },
+                styleOptions() {
+                    return [
+                        { value: 'none', label: this.t.styles.none.label, description: this.t.styles.none.desc },
+                        { value: 'browser', label: this.t.styles.browser.label, description: this.t.styles.browser.desc },
+                        { value: 'shadow', label: this.t.styles.shadow.label, description: this.t.styles.shadow.desc },
+                        { value: 'device', label: this.t.styles.device.label, description: this.t.styles.device.desc }
+                    ];
                 }
             },
             mounted() {
                 this.loadDevices();
                 this.loadStyles();
+                document.title = 'SnapUp - ' + this.t.title;
                 
                 // 添加全局点击监听来关闭下拉菜单
                 document.addEventListener('click', (e) => {
-                    const dropdown = document.querySelector('.protocol-dropdown');
-                    if (dropdown && !dropdown.contains(e.target)) {
+                    // 检查是否点击在协议下拉菜单外部
+                    const protocolDropdown = document.querySelector('.protocol-dropdown');
+                    if (protocolDropdown && !protocolDropdown.contains(e.target)) {
                         this.protocolDropdownOpen = false;
+                    }
+                    
+                    // 检查是否点击在语言下拉菜单外部
+                    const langDropdown = document.querySelector('.lang-dropdown');
+                    if (langDropdown && !langDropdown.contains(e.target)) {
+                        this.langMenuOpen = false;
                     }
                 });
             },
             methods: {
+                switchLang(lang, event) {
+                    if (event) {
+                        event.stopPropagation();
+                    }
+                    this.currentLang = lang;
+                    localStorage.setItem('lang', lang);
+                    this.langMenuOpen = false;
+                    document.title = 'SnapUp - ' + this.t.title;
+                },
                 selectProtocol(value) {
                     this.protocol = value;
                     this.protocolDropdownOpen = false;
@@ -943,15 +1119,8 @@
                                         canvas = this.applyShadowStyle(img);
                                         break;
                                     case 'device':
-                                        // 根据设备类型选择合适的设备框架
-                                        if (device === 'mobile') {
-                                            canvas = this.applyPhoneStyle(img, device);
-                                        } else if (device === 'tablet') {
-                                            canvas = this.applyTabletStyle(img, device);
-                                        } else {
-                                            // 桌面和笔记本使用浏览器样式
-                                            canvas = this.applyBrowserStyle(img);
-                                        }
+                                        // 使用黑色设备框架样式
+                                        canvas = this.applyDeviceFrameStyle(img);
                                         break;
                                     default:
                                         canvas = this.createCanvasFromImage(img);
@@ -1087,6 +1256,56 @@
                     ctx.lineWidth = 1;
                     this.roundRect(ctx, padding, padding, img.width, img.height, borderRadius);
                     ctx.stroke();
+                    
+                    return canvas;
+                },
+                // 设备框架样式（黑色边框）
+                applyDeviceFrameStyle(img) {
+                    const frameWidth = 40;
+                    const borderRadius = 20;
+                    const frameColor = '#1a1a1a';
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width + frameWidth * 2;
+                    canvas.height = img.height + frameWidth * 2;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 填充背景
+                    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                    gradient.addColorStop(0, '#f8fafc');
+                    gradient.addColorStop(1, '#e2e8f0');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // 绘制黑色设备外框
+                    ctx.fillStyle = frameColor;
+                    this.roundRect(ctx, frameWidth - 8, frameWidth - 8, img.width + 16, img.height + 16, borderRadius);
+                    ctx.fill();
+                    
+                    // 绘制内部浅灰边框（增加层次感）
+                    ctx.fillStyle = '#2d2d2d';
+                    this.roundRect(ctx, frameWidth - 4, frameWidth - 4, img.width + 8, img.height + 8, borderRadius - 2);
+                    ctx.fill();
+                    
+                    // 绘制屏幕区域（黑色背景）
+                    ctx.fillStyle = '#000000';
+                    this.roundRect(ctx, frameWidth, frameWidth, img.width, img.height, borderRadius - 4);
+                    ctx.fill();
+                    
+                    // 绘制截图
+                    ctx.save();
+                    this.roundRect(ctx, frameWidth, frameWidth, img.width, img.height, borderRadius - 4);
+                    ctx.clip();
+                    ctx.drawImage(img, frameWidth, frameWidth);
+                    ctx.restore();
+                    
+                    // 添加高光效果（左上角）
+                    const highlightGradient = ctx.createLinearGradient(0, 0, canvas.width / 2, canvas.height / 2);
+                    highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+                    highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    ctx.fillStyle = highlightGradient;
+                    this.roundRect(ctx, frameWidth - 8, frameWidth - 8, img.width + 16, img.height + 16, borderRadius);
+                    ctx.fill();
                     
                     return canvas;
                 },
