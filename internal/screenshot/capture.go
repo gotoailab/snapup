@@ -70,10 +70,24 @@ func (c *ChromeCapture) Capture(ctx context.Context, req models.ScreenshotReques
 	var buf []byte
 
 	// 构建任务列表
-	tasks := chromedp.Tasks{
-		chromedp.EmulateViewport(deviceConfig.Width, deviceConfig.Height),
-		chromedp.Navigate(req.URL),
+	tasks := chromedp.Tasks{}
+	
+	// 设置视口和设备模拟
+	if deviceConfig.Mobile {
+		// 移动设备模拟
+		tasks = append(tasks,
+			chromedp.EmulateViewport(deviceConfig.Width, deviceConfig.Height, 
+				chromedp.EmulateScale(deviceConfig.Scale)),
+		)
+	} else {
+		// 桌面设备
+		tasks = append(tasks,
+			chromedp.EmulateViewport(deviceConfig.Width, deviceConfig.Height),
+		)
 	}
+	
+	// 导航到目标 URL
+	tasks = append(tasks, chromedp.Navigate(req.URL))
 
 	// 如果需要延迟
 	if req.Delay > 0 {

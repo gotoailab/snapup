@@ -5,7 +5,10 @@ version: '3.8'
 
 services:
   chrome:
-    image: chromedp/headless-shell:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.chrome.cn
+    image: snapup-chrome:latest
     container_name: snapup-chrome
     restart: unless-stopped
     ports:
