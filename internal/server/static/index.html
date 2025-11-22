@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SnapUp - Professional Screenshot Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
@@ -15,11 +18,21 @@
         
         body {
             background: #fafafa;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             position: relative;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
-        /* 网格背景 */
+        h1, h2, h3, h4, h5, h6 {
+            letter-spacing: -0.02em;
+        }
+        
+        .text-5xl, .text-6xl {
+            letter-spacing: -0.03em;
+        }
+        
+        /* 网格背景带渐变 */
         body::before {
             content: '';
             position: fixed;
@@ -28,9 +41,25 @@
             right: 0;
             bottom: 0;
             background-image: 
-                linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+                linear-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
             background-size: 40px 40px;
+            mask-image: radial-gradient(
+                ellipse 80% 60% at 50% 40%,
+                rgba(0, 0, 0, 1) 0%,
+                rgba(0, 0, 0, 0.6) 40%,
+                rgba(0, 0, 0, 0.3) 60%,
+                rgba(0, 0, 0, 0.1) 80%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            -webkit-mask-image: radial-gradient(
+                ellipse 80% 60% at 50% 40%,
+                rgba(0, 0, 0, 1) 0%,
+                rgba(0, 0, 0, 0.6) 40%,
+                rgba(0, 0, 0, 0.3) 60%,
+                rgba(0, 0, 0, 0.1) 80%,
+                rgba(0, 0, 0, 0) 100%
+            );
             pointer-events: none;
             z-index: 0;
         }
@@ -47,7 +76,6 @@
         
         /* 自定义下拉菜单样式 */
         .protocol-dropdown {
-            position: relative;
             min-width: 120px;
             border-right: 2px solid #e5e7eb;
         }
@@ -64,24 +92,19 @@
         .protocol-arrow {
             width: 16px;
             height: 16px;
-            transition: transform 0.3s;
         }
         
-        .protocol-dropdown.open .protocol-arrow {
+        .protocol-arrow.rotate-180 {
             transform: rotate(180deg);
         }
         
         .protocol-menu {
-            position: absolute;
-            top: 100%;
-            left: 0;
             min-width: 120px;
-            margin-top: 4px;
             background: white;
             border: 2px solid #000;
             border-radius: 8px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
+            z-index: 9999;
             overflow: hidden;
         }
         
@@ -109,6 +132,10 @@
         .url-input:focus-within {
             border-color: #000;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .url-input input {
+            background: transparent;
         }
         
         .btn-generate {
@@ -339,8 +366,7 @@
                         <h1 class="text-2xl font-bold text-gray-900">SnapUp</h1>
                     </div>
                     <nav class="flex items-center space-x-8">
-                        <a href="#" class="text-gray-600 hover:text-gray-900 font-medium">Mockup Generator</a>
-                        <a href="https://github.com" target="_blank" class="text-gray-600 hover:text-gray-900">
+                        <a href="https://github.com/gotoailab/snapup" target="_blank" class="text-gray-600 hover:text-gray-900">
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
                             </svg>
@@ -374,48 +400,50 @@
                         <label class="block text-sm font-medium text-gray-700 mb-3">
                             Copy and paste your URL here:
                         </label>
-                        <div class="url-input rounded-xl flex items-center bg-white" style="overflow: visible;">
-                            <!-- 自定义协议下拉菜单 -->
-                            <div 
-                                :class="['protocol-dropdown', protocolDropdownOpen ? 'open' : '']"
-                            >
-                                <div 
-                                    @click.stop="protocolDropdownOpen = !protocolDropdownOpen"
-                                    class="protocol-button px-4 py-4 bg-gray-50 text-gray-900 font-semibold"
-                                >
-                                    <span>{{ protocol }}</span>
-                                    <svg 
-                                        class="protocol-arrow" 
-                                        fill="none" 
-                                        stroke="currentColor" 
-                                        viewBox="0 0 24 24"
+                        <div class="relative">
+                            <div class="url-input rounded-xl flex items-center bg-white overflow-hidden">
+                                <!-- 自定义协议下拉菜单 -->
+                                <div class="protocol-dropdown">
+                                    <div 
+                                        @click.stop="protocolDropdownOpen = !protocolDropdownOpen"
+                                        :class="['protocol-button px-4 py-4 bg-gray-50 text-gray-900 font-semibold', protocolDropdownOpen ? 'open' : '']"
                                     >
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-                                    </svg>
+                                        <span>{{ protocol }}</span>
+                                        <svg 
+                                            :class="['protocol-arrow', protocolDropdownOpen ? 'rotate-180' : '']"
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                            style="transition: transform 0.3s;"
+                                        >
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </div>
                                 </div>
-                                <div v-show="protocolDropdownOpen" class="protocol-menu">
-                                    <div 
-                                        @click="selectProtocol('https://')"
-                                        :class="['protocol-option', protocol === 'https://' ? 'active' : '']"
-                                    >
-                                        https://
-                                    </div>
-                                    <div 
-                                        @click="selectProtocol('http://')"
-                                        :class="['protocol-option', protocol === 'http://' ? 'active' : '']"
-                                    >
-                                        http://
-                                    </div>
+                                <input
+                                    v-model="urlInput"
+                                    type="text"
+                                    placeholder="www.example.com"
+                                    class="flex-1 px-4 py-4 outline-none text-gray-900"
+                                    @keyup.enter="generateScreenshots"
+                                    @click="closeProtocolDropdown"
+                                />
+                            </div>
+                            <!-- 下拉菜单放在外层 -->
+                            <div v-show="protocolDropdownOpen" class="protocol-menu" style="position: absolute; top: 100%; left: 0; margin-top: 6px;">
+                                <div 
+                                    @click="selectProtocol('https://')"
+                                    :class="['protocol-option', protocol === 'https://' ? 'active' : '']"
+                                >
+                                    https://
+                                </div>
+                                <div 
+                                    @click="selectProtocol('http://')"
+                                    :class="['protocol-option', protocol === 'http://' ? 'active' : '']"
+                                >
+                                    http://
                                 </div>
                             </div>
-                            <input
-                                v-model="urlInput"
-                                type="text"
-                                placeholder="www.example.com"
-                                class="flex-1 px-4 py-4 outline-none text-gray-900"
-                                @keyup.enter="generateScreenshots"
-                                @click="closeProtocolDropdown"
-                            />
                         </div>
                     </div>
 
