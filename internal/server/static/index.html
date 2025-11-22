@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapUp - Professional Screenshot Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        [v-cloak] { display: none; }
+        
+        * {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            background: #fafafa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            position: relative;
+        }
+        
+        /* 网格背景 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        main {
+            position: relative;
+            z-index: 1;
+        }
+        
+        header, footer {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 自定义下拉菜单样式 */
+        .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23000'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.25em;
+            padding-right: 2.5rem;
+        }
+        
+        .protocol-select {
+            border-right: 2px solid #e5e7eb;
+        }
+        
+        .url-input {
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s;
+        }
+        
+        .url-input:focus-within {
+            border-color: #000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-generate {
+            background: #000;
+            transition: all 0.3s;
+        }
+        
+        .btn-generate:hover:not(:disabled) {
+            background: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-generate:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .preview-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s;
+        }
+        
+        .preview-card:hover {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-download {
+            background: #000;
+            transition: all 0.3s;
+        }
+        
+        .btn-download:hover {
+            background: #1a1a1a;
+            transform: translateY(-1px);
+        }
+        
+        .loading-spinner {
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #000;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.3s;
+        }
+        
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+        
+        .device-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 16px;
+            opacity: 0.4;
+        }
+        
+        /* 风格选择按钮 */
+        .style-btn {
+            position: relative;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .style-btn:hover {
+            border-color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .style-btn.active {
+            border-color: #000;
+            background: #000;
+            color: white;
+        }
+        
+        /* 风格预览浮窗 */
+        .style-preview-popup {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: white;
+            border: 2px solid #000;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+            z-index: 100;
+            min-width: 200px;
+        }
+        
+        .style-btn:hover .style-preview-popup {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-12px);
+        }
+        
+        .style-preview-popup::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #000;
+        }
+        
+        .preview-mockup-container {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+        }
+        
+        /* 预览样式示例 */
+        .preview-none {
+            width: 100%;
+            height: 80px;
+            background: white;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+        }
+        
+        .preview-browser {
+            width: 100%;
+            height: 80px;
+            background: white;
+            border: 2px solid #d1d5db;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+        }
+        
+        .preview-browser-header {
+            height: 24px;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            gap: 4px;
+        }
+        
+        .preview-browser-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .preview-shadow {
+            width: 100%;
+            height: 80px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .preview-phone {
+            width: 60px;
+            height: 100px;
+            background: #1f2937;
+            border-radius: 12px;
+            border: 3px solid #111827;
+            padding: 8px 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .preview-phone-screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+        }
+        
+        .preview-tablet {
+            width: 80px;
+            height: 100px;
+            background: #1f2937;
+            border-radius: 12px;
+            border: 3px solid #111827;
+            padding: 10px 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .preview-tablet-screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak>
+        <!-- 头部 -->
+        <header class="bg-white border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <!-- Logo -->
+                        <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none">
+                            <rect width="32" height="32" rx="6" fill="#000"/>
+                            <path d="M9 16L14 21L23 11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <h1 class="text-2xl font-bold text-gray-900">SnapUp</h1>
+                    </div>
+                    <nav class="flex items-center space-x-8">
+                        <a href="#" class="text-gray-600 hover:text-gray-900 font-medium">Mockup Generator</a>
+                        <a href="https://github.com" target="_blank" class="text-gray-600 hover:text-gray-900">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                            </svg>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="py-16 px-4">
+            <!-- 标题区 -->
+            <div class="max-w-4xl mx-auto text-center mb-12">
+                <h2 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+                    Website Screenshot Generator<br>
+                    <span class="text-gray-500">Made Simple</span>
+                </h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Generate professional website screenshots from any URL with our free online tool. 
+                    Create stunning desktop, tablet, and mobile device screenshots for presentations, 
+                    portfolios, and client demos in seconds.
+                </p>
+            </div>
+
+            <!-- 输入区 -->
+            <div class="max-w-2xl mx-auto mb-16">
+                <div class="bg-white rounded-2xl shadow-lg p-8">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6">Generate Screenshot</h3>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            Copy and paste your URL here:
+                        </label>
+                        <div class="url-input rounded-xl overflow-hidden flex items-center bg-white">
+                            <select 
+                                v-model="protocol"
+                                class="custom-select protocol-select px-4 py-4 bg-gray-50 text-gray-900 font-semibold cursor-pointer outline-none"
+                            >
+                                <option value="https://">https://</option>
+                                <option value="http://">http://</option>
+                            </select>
+                            <input
+                                v-model="urlInput"
+                                type="text"
+                                placeholder="www.example.com"
+                                class="flex-1 px-4 py-4 outline-none text-gray-900"
+                                @keyup.enter="generateScreenshots"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- 风格选择 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            Screenshot Style:
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                            <button
+                                v-for="style in styleOptions"
+                                :key="style.value"
+                                @click="form.style = style.value"
+                                :class="[
+                                    'style-btn px-4 py-3 rounded-xl font-semibold text-sm',
+                                    form.style === style.value ? 'active' : 'bg-white hover:bg-gray-50'
+                                ]"
+                            >
+                                {{ style.label }}
+                                
+                                <!-- 悬停预览 -->
+                                <div class="style-preview-popup">
+                                    <div class="text-xs font-bold text-gray-900 mb-2 text-center">{{ style.label }}</div>
+                                    <div class="preview-mockup-container">
+                                        <!-- None 预览 -->
+                                        <div v-if="style.value === 'none'" class="preview-none"></div>
+                                        
+                                        <!-- Browser 预览 -->
+                                        <div v-if="style.value === 'browser'" class="preview-browser">
+                                            <div class="preview-browser-header">
+                                                <div class="preview-browser-dot bg-red-400"></div>
+                                                <div class="preview-browser-dot bg-yellow-400"></div>
+                                                <div class="preview-browser-dot bg-green-400"></div>
+                                            </div>
+                                            <div class="flex-1 bg-white"></div>
+                                        </div>
+                                        
+                                        <!-- Shadow 预览 -->
+                                        <div v-if="style.value === 'shadow'" class="preview-shadow"></div>
+                                        
+                                        <!-- Phone 预览 -->
+                                        <div v-if="style.value === 'phone'" class="preview-phone">
+                                            <div class="preview-phone-screen"></div>
+                                        </div>
+                                        
+                                        <!-- Tablet 预览 -->
+                                        <div v-if="style.value === 'tablet'" class="preview-tablet">
+                                            <div class="preview-tablet-screen"></div>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mt-2 text-center">{{ style.description }}</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 高级选项 -->
+                    <details class="mb-6 bg-gray-50 rounded-xl">
+                        <summary class="p-4 cursor-pointer font-medium text-gray-900 hover:bg-gray-100 rounded-xl">
+                            Advanced Options
+                        </summary>
+                        <div class="px-4 pb-4 space-y-4">
+                            <div class="flex items-center space-x-3">
+                                <input
+                                    v-model="form.full_page"
+                                    type="checkbox"
+                                    id="fullPage"
+                                    class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                                />
+                                <label for="fullPage" class="text-sm text-gray-700">
+                                    Full page screenshot
+                                </label>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm text-gray-700 mb-2">
+                                        Delay (ms)
+                                    </label>
+                                    <input
+                                        v-model.number="form.delay"
+                                        type="number"
+                                        min="0"
+                                        max="10000"
+                                        step="100"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm text-gray-700 mb-2">
+                                        Quality (1-100)
+                                    </label>
+                                    <input
+                                        v-model.number="form.quality"
+                                        type="number"
+                                        min="1"
+                                        max="100"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <button
+                        @click="generateScreenshots"
+                        :disabled="loading || !urlInput"
+                        class="btn-generate w-full py-4 rounded-xl text-white font-bold text-lg"
+                    >
+                        <span v-if="loading">Generating...</span>
+                        <span v-else>Generate</span>
+                    </button>
+                </div>
+
+                <!-- 错误提示 -->
+                <div v-if="error" class="mt-4 bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-red-800 font-medium">{{ error }}</p>
+                    </div>
+                </div>
+
+                <!-- 成功提示 -->
+                <div v-if="success" class="mt-4 bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-green-800 font-medium">{{ success }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预览区 -->
+            <div id="preview-section" class="max-w-6xl mx-auto">
+                <div class="text-center mb-8">
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">Generated Screenshots</h3>
+                </div>
+
+                <!-- 加载状态 -->
+                <div v-if="loading" class="flex flex-col items-center justify-center py-20">
+                    <div class="loading-spinner mb-4"></div>
+                    <p class="text-gray-600 font-medium">Generating screenshots...</p>
+                </div>
+
+                <!-- 结果展示 -->
+                <div v-else-if="resultImages.length > 0" class="space-y-8">
+                    <div 
+                        v-for="(result, index) in resultImages" 
+                        :key="index"
+                        class="preview-card rounded-2xl p-8"
+                    >
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center space-x-3">
+                                <!-- 设备图标 -->
+                                <svg v-if="result.deviceType === 'desktop'" class="w-6 h-6 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/>
+                                </svg>
+                                <svg v-else-if="result.deviceType === 'laptop'" class="w-6 h-6 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
+                                </svg>
+                                <svg v-else-if="result.deviceType === 'tablet'" class="w-6 h-6 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 1.99-.9 1.99-2L23 6c0-1.1-.9-2-2-2zm-2 14H5V6h14v12z"/>
+                                </svg>
+                                <svg v-else-if="result.deviceType === 'mobile'" class="w-6 h-6 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+                                </svg>
+                                <div>
+                                    <h4 class="text-xl font-bold text-gray-900">{{ result.device }}</h4>
+                                    <p class="text-sm text-gray-500">({{ result.size }})</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button
+                                    @click="copyImageUrl(result.url)"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-gray-700"
+                                    title="Copy link"
+                                >
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </button>
+                                <a
+                                    :href="result.url"
+                                    :download="result.filename"
+                                    class="btn-download px-6 py-2 rounded-lg text-white font-bold"
+                                >
+                                    Download PNG
+                                </a>
+                            </div>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                            <img
+                                :src="result.url"
+                                :alt="result.device"
+                                class="w-full h-auto"
+                            />
+                        </div>
+                        <p class="text-xs text-gray-500 mt-3 text-center">
+                            Dimensions based on screen size. Downloaded image will appear larger due to frame.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 空状态 -->
+                <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="preview-card rounded-2xl p-8 text-center">
+                        <svg class="device-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/>
+                        </svg>
+                        <h4 class="font-bold text-gray-900 mb-1">Desktop</h4>
+                        <p class="text-sm text-gray-500">(1440 × 900)</p>
+                        <p class="text-xs text-gray-400 mt-3">Desktop screenshot will appear here</p>
+                    </div>
+                    <div class="preview-card rounded-2xl p-8 text-center">
+                        <svg class="device-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 1.99-.9 1.99-2L23 6c0-1.1-.9-2-2-2zm-2 14H5V6h14v12z"/>
+                        </svg>
+                        <h4 class="font-bold text-gray-900 mb-1">Tablet</h4>
+                        <p class="text-sm text-gray-500">(768 × 1024)</p>
+                        <p class="text-xs text-gray-400 mt-3">Tablet screenshot will appear here</p>
+                    </div>
+                    <div class="preview-card rounded-2xl p-8 text-center">
+                        <svg class="device-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+                        </svg>
+                        <h4 class="font-bold text-gray-900 mb-1">Mobile</h4>
+                        <p class="text-sm text-gray-500">(390 × 844)</p>
+                        <p class="text-xs text-gray-400 mt-3">Mobile screenshot will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="bg-white border-t border-gray-200 mt-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                            <rect width="32" height="32" rx="6" fill="#000"/>
+                            <path d="M9 16L14 21L23 11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="text-sm text-gray-600">© 2025 SnapUp. All rights reserved.</span>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <a href="#" class="text-sm text-gray-600 hover:text-gray-900">Privacy Policy</a>
+                        <a href="#" class="text-sm text-gray-600 hover:text-gray-900">Terms & Conditions</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    protocol: 'https://',
+                    urlInput: '',
+                    form: {
+                        style: 'none',
+                        delay: 1000,
+                        full_page: false,
+                        quality: 90,
+                        background: '#f0f2f5'
+                    },
+                    styleOptions: [
+                        { value: 'none', label: 'None', description: 'Clean screenshot without frame' },
+                        { value: 'browser', label: 'Browser', description: 'Browser window frame' },
+                        { value: 'shadow', label: 'Shadow', description: 'Floating shadow effect' },
+                        { value: 'phone', label: 'Phone', description: 'Mobile device frame' },
+                        { value: 'tablet', label: 'Tablet', description: 'Tablet device frame' }
+                    ],
+                    devices: [],
+                    styles: [],
+                    loading: false,
+                    error: null,
+                    success: null,
+                    resultImages: []
+                };
+            },
+            computed: {
+                fullUrl() {
+                    return this.protocol + this.urlInput;
+                }
+            },
+            mounted() {
+                this.loadDevices();
+                this.loadStyles();
+            },
+            methods: {
+                async loadDevices() {
+                    try {
+                        const response = await fetch('/api/devices');
+                        const data = await response.json();
+                        this.devices = data.devices || [];
+                    } catch (error) {
+                        console.error('加载设备列表失败:', error);
+                    }
+                },
+                async loadStyles() {
+                    try {
+                        const response = await fetch('/api/styles');
+                        const data = await response.json();
+                        this.styles = data.styles || [];
+                    } catch (error) {
+                        console.error('加载样式列表失败:', error);
+                    }
+                },
+                async generateScreenshots() {
+                    if (!this.urlInput) {
+                        this.error = 'Please enter a URL';
+                        setTimeout(() => this.error = null, 3000);
+                        return;
+                    }
+
+                    this.loading = true;
+                    this.error = null;
+                    this.success = null;
+                    this.resultImages = [];
+
+                    // 自动为所有设备类型生成截图
+                    const deviceTypes = this.devices.map(d => d.type);
+
+                    try {
+                        const promises = deviceTypes.map(deviceType => {
+                            const requestData = {
+                                url: this.fullUrl,
+                                device: deviceType,
+                                style: this.form.style,
+                                delay: this.form.delay,
+                                full_page: this.form.full_page,
+                                quality: this.form.quality,
+                                background: this.form.background
+                            };
+
+                            return fetch('/api/screenshot', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(requestData)
+                            }).then(res => res.json()).then(data => ({
+                                ...data,
+                                deviceType
+                            }));
+                        });
+
+                        const results = await Promise.all(promises);
+                        
+                        // 处理结果
+                        const successResults = results.filter(r => r.success);
+                        const failedResults = results.filter(r => !r.success);
+
+                        if (successResults.length > 0) {
+                            this.resultImages = successResults.map(result => {
+                                const device = this.devices.find(d => d.type === result.deviceType);
+                                return {
+                                    url: result.image_url,
+                                    filename: result.filename,
+                                    device: device ? device.name : result.deviceType,
+                                    deviceType: result.deviceType,
+                                    size: device ? `${device.width} × ${device.height}` : ''
+                                };
+                            });
+                            this.success = `Successfully generated ${successResults.length} screenshots!`;
+                            
+                            // 滚动到预览区
+                            setTimeout(() => {
+                                const previewSection = document.getElementById('preview-section');
+                                if (previewSection) {
+                                    previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                            }, 100);
+                        }
+
+                        if (failedResults.length > 0) {
+                            this.error = `Failed to generate ${failedResults.length} screenshot(s)`;
+                        }
+                    } catch (error) {
+                        this.error = 'Request failed: ' + error.message;
+                        console.error('截图请求失败:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                async copyImageUrl(imageUrl) {
+                    if (imageUrl) {
+                        try {
+                            const fullUrl = window.location.origin + imageUrl;
+                            await navigator.clipboard.writeText(fullUrl);
+                            this.success = 'Link copied to clipboard';
+                            setTimeout(() => {
+                                this.success = null;
+                            }, 2000);
+                        } catch (error) {
+                            this.error = 'Failed to copy: ' + error.message;
+                        }
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

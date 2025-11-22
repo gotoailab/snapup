@@ -1,0 +1,129 @@
+=== SnapUp 项目结构 ===
+
+snapup/
+├── cmd/
+│   └── snapup/
+│       └── main.go                 # 主程序入口
+│
+├── internal/
+│   ├── models/
+│   │   └── types.go               # 数据模型和类型定义
+│   │
+│   ├── screenshot/
+│   │   ├── capture.go             # 截图捕获（ChromeDP）
+│   │   ├── processor.go           # 图片处理和样式应用
+│   │   └── service.go             # 截图服务核心逻辑
+│   │
+│   └── server/
+│       ├── handler.go             # HTTP 请求处理器
+│       ├── middleware.go          # 中间件（日志、CORS、恢复）
+│       ├── server.go              # Web 服务器
+│       └── static/
+│           └── index.html         # 前端界面（Vue 3 + Tailwind CSS）
+│
+├── examples/
+│   ├── api_test.sh                # API 测试脚本
+│   └── README.md                  # 示例文档
+│
+├── screenshots/                   # 截图输出目录（运行时创建）
+│
+├── Dockerfile                     # Docker 镜像构建文件
+├── docker-compose.yml             # Docker Compose 配置
+├── .dockerignore                  # Docker 构建忽略文件
+├── Makefile                       # Make 构建命令
+├── .gitignore                     # Git 忽略文件
+├── go.mod                         # Go 模块定义
+├── go.sum                         # Go 依赖锁定文件
+│
+├── README.md                      # 项目说明文档
+├── QUICKSTART.md                  # 快速开始指南
+└── INSTALL.md                     # 详细安装指南
+
+=== 主要功能模块 ===
+
+1. 截图捕获 (screenshot/capture.go)
+   - 使用 ChromeDP 控制 Chrome 浏览器
+   - 支持多种设备尺寸
+   - 支持全页和视口截图
+
+2. 图片处理 (screenshot/processor.go)
+   - 玻璃风格：半透明边框效果
+   - 设备边框：模拟设备外壳
+   - 浮动阴影：悬浮效果
+   - 无样式：纯净截图
+
+3. Web 服务器 (server/)
+   - RESTful API 接口
+   - 静态文件服务
+   - 健康检查端点
+   - CORS 支持
+
+4. 前端界面 (server/static/index.html)
+   - Vue 3 响应式界面
+   - Tailwind CSS 样式
+   - 实时预览
+   - 下载功能
+
+=== API 接口 ===
+
+POST /api/screenshot     # 生成截图
+GET  /api/devices        # 获取设备列表
+GET  /api/styles         # 获取样式列表
+GET  /api/health         # 健康检查
+GET  /screenshots/*      # 访问截图文件
+
+=== 快速启动命令 ===
+
+# Docker 方式
+docker-compose up -d
+
+# 本地方式
+make build
+make run
+
+# 或
+go build -o snapup ./cmd/snapup
+./snapup -port 8080
+
+=== 配置选项 ===
+
+命令行参数：
+  -port int        服务器端口 (默认: 8080)
+  -output string   截图输出目录 (默认: ./screenshots)
+
+设备类型：
+  - desktop   桌面 (1920x1080)
+  - laptop    笔记本 (1440x900)
+  - tablet    平板 (768x1024)
+  - mobile    手机 (375x812)
+
+样式类型：
+  - none      无样式
+  - glass     玻璃风格
+  - device    设备边框
+  - floating  浮动阴影
+
+=== 技术栈 ===
+
+后端：
+  - Go 1.21+
+  - ChromeDP (Chrome DevTools Protocol)
+  - 标准库 net/http
+
+前端：
+  - Vue 3
+  - Tailwind CSS
+  - Vanilla JavaScript
+
+容器化：
+  - Docker
+  - Docker Compose
+
+=== 注意事项 ===
+
+1. 需要安装 Chrome/Chromium 浏览器（Docker 会自动安装）
+2. 默认端口为 8080，可通过 -port 参数修改
+3. 截图文件保存在 screenshots 目录
+4. 首次运行会自动创建输出目录
+5. Docker 镜像包含完整的 Chrome 和依赖
+
