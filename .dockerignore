@@ -1,40 +1,55 @@
-# Binaries
+# Git 相关
+.git
+.gitignore
+.gitattributes
+
+# 构建产物
 snapup
 *.exe
-*.exe~
 *.dll
 *.so
 *.dylib
+build/
+dist/
 
-# Test binary
+# 截图文件
+screenshots/*.png
+screenshots/*.jpg
+screenshots/*.jpeg
+
+# Go 相关
 *.test
-
-# Output
 *.out
+vendor/
 
-# Screenshots
-screenshots/
-*.png
-*.jpg
-
-# IDE
-.idea/
+# IDE 相关
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
 
-# OS
+# 系统文件
 .DS_Store
 Thumbs.db
 
-# Git
-.git/
-.gitignore
-
-# Documentation
+# 文档
 *.md
-docs/
+!README.md
+LICENSE
 
-# Go workspace
-go.work
+# Docker 相关
+Dockerfile
+Dockerfile.cn
+docker-compose.yml
+docker-compose.cn.yml
+.dockerignore
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+*.log
+
+# 测试文件
+*_test.go

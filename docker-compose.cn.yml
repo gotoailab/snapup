@@ -1,3 +1,6 @@
+# 中国版 Docker Compose 配置
+# 使用国内镜像源优化构建速度
+
 version: '3.8'
 
 services:
@@ -10,35 +13,39 @@ services:
     shm_size: '2gb'
     networks:
       - snapup-network
-    # chromedp/headless-shell 不包含健康检查工具，禁用健康检查
+    # 等待一定时间让 Chrome 启动
+    # chromedp/headless-shell 不包含健康检查工具，所以使用简单的延迟
     healthcheck:
       test: ["NONE"]
 
+  # SnapUp 主应用
   snapup:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: snapup
+      dockerfile: Dockerfile.cn
+      args:
+        - GOPROXY=https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,direct
+    container_name: snapup-app
+    restart: unless-stopped
     ports:
       - "8080:8080"
-    volumes:
-      - ./screenshots:/app/screenshots
     environment:
       - PORT=8080
       - CHROME_WS_URL=ws://chrome:9222
+    volumes:
+      - ./screenshots:/app/screenshots
     depends_on:
       - chrome
     # 添加启动延迟，等待 Chrome 容器就绪
     command: sh -c "sleep 10 && /app/snapup -mode=http -port=8080 -output=/app/screenshots"
     networks:
       - snapup-network
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 40s
 
 networks:
   snapup-network:
@@ -47,3 +54,4 @@ networks:
 volumes:
   screenshots:
     driver: local
+
