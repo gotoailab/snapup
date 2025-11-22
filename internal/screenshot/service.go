@@ -13,7 +13,6 @@ import (
 // Service 截图服务
 type Service struct {
 	capturer  Capturer
-	processor Processor
 	outputDir string
 }
 
@@ -26,7 +25,6 @@ func NewService(outputDir string) *Service {
 
 	return &Service{
 		capturer:  NewChromeCapture(),
-		processor: NewImageProcessor(),
 		outputDir: outputDir,
 	}
 }
@@ -50,20 +48,11 @@ func (s *Service) TakeScreenshot(ctx context.Context, req models.ScreenshotReque
 		}, nil
 	}
 
-	// 处理图片样式
-	processedData, err := s.processor.Process(data, req.Style, req.Background)
-	if err != nil {
-		return &models.ScreenshotResponse{
-			Success: false,
-			Message: fmt.Sprintf("处理图片失败: %v", err),
-		}, nil
-	}
-
-	// 保存文件
+	// 保存文件（不再处理样式，直接保存原始截图）
 	filename := s.generateFilename(req)
 	filepath := filepath.Join(s.outputDir, filename)
 
-	if err := os.WriteFile(filepath, processedData, 0644); err != nil {
+	if err := os.WriteFile(filepath, data, 0644); err != nil {
 		return &models.ScreenshotResponse{
 			Success: false,
 			Message: fmt.Sprintf("保存文件失败: %v", err),
@@ -104,7 +93,7 @@ func (s *Service) validateRequest(req *models.ScreenshotRequest) error {
 // generateFilename 生成文件名
 func (s *Service) generateFilename(req models.ScreenshotRequest) string {
 	id := uuid.New().String()
-	return fmt.Sprintf("screenshot_%s_%s_%s.png", req.Device, req.Style, id)
+	return fmt.Sprintf("screenshot_%s_%s.png", req.Device, id)
 }
 
 // CleanupOldScreenshots 清理旧截图（可选功能）
