@@ -46,17 +46,59 @@
         }
         
         /* 自定义下拉菜单样式 */
-        .custom-select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23000'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 1.25em;
-            padding-right: 2.5rem;
+        .protocol-dropdown {
+            position: relative;
+            min-width: 120px;
+            border-right: 2px solid #e5e7eb;
         }
         
-        .protocol-select {
-            border-right: 2px solid #e5e7eb;
+        .protocol-button {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .protocol-arrow {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.3s;
+        }
+        
+        .protocol-dropdown.open .protocol-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .protocol-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 120px;
+            margin-top: 4px;
+            background: white;
+            border: 2px solid #000;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .protocol-option {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        .protocol-option:hover {
+            background: #f3f4f6;
+        }
+        
+        .protocol-option.active {
+            background: #000;
+            color: white;
         }
         
         .url-input {
@@ -86,7 +128,7 @@
         }
         
         .preview-card {
-            background: white;
+            background: #f4f4f4;
             border: 1px solid #e5e7eb;
             transition: all 0.3s;
         }
@@ -285,9 +327,14 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                         <!-- Logo -->
-                        <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none">
+                        <svg class="w-9 h-9" viewBox="0 0 32 32" fill="none">
                             <rect width="32" height="32" rx="6" fill="#000"/>
-                            <path d="M9 16L14 21L23 11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <g transform="translate(6, 6)">
+                                <rect x="2" y="4" width="16" height="12" rx="2" stroke="white" stroke-width="1.8" fill="none"/>
+                                <circle cx="10" cy="10" r="3" stroke="white" stroke-width="1.8" fill="none"/>
+                                <circle cx="15" cy="7" r="0.8" fill="white"/>
+                                <path d="M6 4L7.5 2H12.5L14 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            </g>
                         </svg>
                         <h1 class="text-2xl font-bold text-gray-900">SnapUp</h1>
                     </div>
@@ -327,20 +374,47 @@
                         <label class="block text-sm font-medium text-gray-700 mb-3">
                             Copy and paste your URL here:
                         </label>
-                        <div class="url-input rounded-xl overflow-hidden flex items-center bg-white">
-                            <select 
-                                v-model="protocol"
-                                class="custom-select protocol-select px-4 py-4 bg-gray-50 text-gray-900 font-semibold cursor-pointer outline-none"
+                        <div class="url-input rounded-xl flex items-center bg-white" style="overflow: visible;">
+                            <!-- 自定义协议下拉菜单 -->
+                            <div 
+                                :class="['protocol-dropdown', protocolDropdownOpen ? 'open' : '']"
                             >
-                                <option value="https://">https://</option>
-                                <option value="http://">http://</option>
-                            </select>
+                                <div 
+                                    @click.stop="protocolDropdownOpen = !protocolDropdownOpen"
+                                    class="protocol-button px-4 py-4 bg-gray-50 text-gray-900 font-semibold"
+                                >
+                                    <span>{{ protocol }}</span>
+                                    <svg 
+                                        class="protocol-arrow" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                                <div v-show="protocolDropdownOpen" class="protocol-menu">
+                                    <div 
+                                        @click="selectProtocol('https://')"
+                                        :class="['protocol-option', protocol === 'https://' ? 'active' : '']"
+                                    >
+                                        https://
+                                    </div>
+                                    <div 
+                                        @click="selectProtocol('http://')"
+                                        :class="['protocol-option', protocol === 'http://' ? 'active' : '']"
+                                    >
+                                        http://
+                                    </div>
+                                </div>
+                            </div>
                             <input
                                 v-model="urlInput"
                                 type="text"
                                 placeholder="www.example.com"
                                 class="flex-1 px-4 py-4 outline-none text-gray-900"
                                 @keyup.enter="generateScreenshots"
+                                @click="closeProtocolDropdown"
                             />
                         </div>
                     </div>
@@ -584,9 +658,14 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
-                        <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                        <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none">
                             <rect width="32" height="32" rx="6" fill="#000"/>
-                            <path d="M9 16L14 21L23 11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <g transform="translate(6, 6)">
+                                <rect x="2" y="4" width="16" height="12" rx="2" stroke="white" stroke-width="1.8" fill="none"/>
+                                <circle cx="10" cy="10" r="3" stroke="white" stroke-width="1.8" fill="none"/>
+                                <circle cx="15" cy="7" r="0.8" fill="white"/>
+                                <path d="M6 4L7.5 2H12.5L14 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            </g>
                         </svg>
                         <span class="text-sm text-gray-600">© 2025 SnapUp. All rights reserved.</span>
                     </div>
@@ -606,6 +685,7 @@
             data() {
                 return {
                     protocol: 'https://',
+                    protocolDropdownOpen: false,
                     urlInput: '',
                     form: {
                         style: 'none',
@@ -637,8 +717,23 @@
             mounted() {
                 this.loadDevices();
                 this.loadStyles();
+                
+                // 添加全局点击监听来关闭下拉菜单
+                document.addEventListener('click', (e) => {
+                    const dropdown = document.querySelector('.protocol-dropdown');
+                    if (dropdown && !dropdown.contains(e.target)) {
+                        this.protocolDropdownOpen = false;
+                    }
+                });
             },
             methods: {
+                selectProtocol(value) {
+                    this.protocol = value;
+                    this.protocolDropdownOpen = false;
+                },
+                closeProtocolDropdown() {
+                    this.protocolDropdownOpen = false;
+                },
                 async loadDevices() {
                     try {
                         const response = await fetch('/api/devices');
