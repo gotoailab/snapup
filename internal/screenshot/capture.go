@@ -97,6 +97,16 @@ func (c *ChromeCapture) Capture(ctx context.Context, req models.ScreenshotReques
 		tasks = append(tasks, chromedp.Sleep(1*time.Second))
 	}
 
+	// 隐藏滚动条
+	hideScrollbarJS := `
+		(function() {
+			const style = document.createElement('style');
+			style.textContent = '* { scrollbar-width: none !important; -ms-overflow-style: none !important; } *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; } body { overflow: -moz-scrollbars-none !important; }';
+			document.head.appendChild(style);
+		})();
+	`
+	tasks = append(tasks, chromedp.Evaluate(hideScrollbarJS, nil))
+
 	// 执行截图
 	if req.FullPage {
 		tasks = append(tasks, chromedp.FullScreenshot(&buf, 100))

@@ -484,14 +484,9 @@
                                         <!-- Shadow 预览 -->
                                         <div v-if="style.value === 'shadow'" class="preview-shadow"></div>
                                         
-                                        <!-- Phone 预览 -->
-                                        <div v-if="style.value === 'phone'" class="preview-phone">
+                                        <!-- Device Frame 预览 -->
+                                        <div v-if="style.value === 'device'" class="preview-phone">
                                             <div class="preview-phone-screen"></div>
-                                        </div>
-                                        
-                                        <!-- Tablet 预览 -->
-                                        <div v-if="style.value === 'tablet'" class="preview-tablet">
-                                            <div class="preview-tablet-screen"></div>
                                         </div>
                                     </div>
                                     <p class="text-xs text-gray-600 mt-2 text-center">{{ style.description }}</p>
@@ -747,8 +742,7 @@
                         { value: 'none', label: 'None', description: 'Clean screenshot without frame' },
                         { value: 'browser', label: 'Browser', description: 'Browser window frame' },
                         { value: 'shadow', label: 'Shadow', description: 'Floating shadow effect' },
-                        { value: 'phone', label: 'Phone', description: 'Mobile device frame' },
-                        { value: 'tablet', label: 'Tablet', description: 'Tablet device frame' }
+                        { value: 'device', label: 'Device Frame', description: 'Device mockup with frame' }
                     ],
                     devices: [],
                     styles: [],
@@ -948,11 +942,16 @@
                                     case 'shadow':
                                         canvas = this.applyShadowStyle(img);
                                         break;
-                                    case 'phone':
-                                        canvas = this.applyPhoneStyle(img, device);
-                                        break;
-                                    case 'tablet':
-                                        canvas = this.applyTabletStyle(img, device);
+                                    case 'device':
+                                        // 根据设备类型选择合适的设备框架
+                                        if (device === 'mobile') {
+                                            canvas = this.applyPhoneStyle(img, device);
+                                        } else if (device === 'tablet') {
+                                            canvas = this.applyTabletStyle(img, device);
+                                        } else {
+                                            // 桌面和笔记本使用浏览器样式
+                                            canvas = this.applyBrowserStyle(img);
+                                        }
                                         break;
                                     default:
                                         canvas = this.createCanvasFromImage(img);
@@ -1032,25 +1031,38 @@
                 },
                 // 阴影样式
                 applyShadowStyle(img) {
-                    const padding = 60;
-                    const shadowBlur = 40;
-                    const shadowOffset = 20;
+                    const padding = 80;
+                    const shadowBlur = 50;
+                    const shadowOffset = 25;
+                    const borderRadius = 16;
                     
                     const canvas = document.createElement('canvas');
-                    canvas.width = img.width + padding * 2;
-                    canvas.height = img.height + padding * 2;
+                    canvas.width = img.width + padding * 2 + shadowOffset;
+                    canvas.height = img.height + padding * 2 + shadowOffset;
                     const ctx = canvas.getContext('2d');
                     
-                    // 绘制阴影
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
-                    ctx.shadowBlur = shadowBlur;
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = shadowOffset;
+                    // 填充背景渐变
+                    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                    gradient.addColorStop(0, '#f0f4f8');
+                    gradient.addColorStop(1, '#e2e8f0');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
                     
-                    // 绘制白色背景（用于显示阴影）
-                    ctx.fillStyle = '#ffffff';
-                    this.roundRect(ctx, padding, padding, img.width, img.height, 12);
-                    ctx.fill();
+                    // 绘制多层阴影效果
+                    for (let i = 0; i < 3; i++) {
+                        const offset = shadowOffset + i * 5;
+                        const blur = shadowBlur - i * 10;
+                        const alpha = 0.08 - i * 0.02;
+                        
+                        ctx.shadowColor = `rgba(0, 0, 0, ${alpha})`;
+                        ctx.shadowBlur = blur;
+                        ctx.shadowOffsetX = 0;
+                        ctx.shadowOffsetY = offset;
+                        
+                        ctx.fillStyle = '#ffffff';
+                        this.roundRect(ctx, padding, padding, img.width, img.height, borderRadius);
+                        ctx.fill();
+                    }
                     
                     // 重置阴影
                     ctx.shadowColor = 'transparent';
@@ -1058,12 +1070,23 @@
                     ctx.shadowOffsetX = 0;
                     ctx.shadowOffsetY = 0;
                     
+                    // 绘制白色边框
+                    ctx.fillStyle = '#ffffff';
+                    this.roundRect(ctx, padding, padding, img.width, img.height, borderRadius);
+                    ctx.fill();
+                    
                     // 绘制截图
                     ctx.save();
-                    this.roundRect(ctx, padding, padding, img.width, img.height, 12);
+                    this.roundRect(ctx, padding, padding, img.width, img.height, borderRadius);
                     ctx.clip();
                     ctx.drawImage(img, padding, padding);
                     ctx.restore();
+                    
+                    // 添加轻微的内阴影效果（边框）
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+                    ctx.lineWidth = 1;
+                    this.roundRect(ctx, padding, padding, img.width, img.height, borderRadius);
+                    ctx.stroke();
                     
                     return canvas;
                 },
