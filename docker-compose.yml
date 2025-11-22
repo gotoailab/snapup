@@ -43,6 +43,29 @@ services:
       retries: 3
       start_period: 10s
 
+  # SnapUp MCP Server（按需启动）
+  snapup-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: snapup-mcp
+    restart: "no"  # 不自动重启，需要手动启动
+    environment:
+      - RUN_MODE=mcp
+      - OUTPUT_DIR=/app/screenshots
+      - CHROME_WS_URL=ws://chrome:9222
+    volumes:
+      - ./screenshots:/app/screenshots
+    depends_on:
+      - chrome
+    command: sh -c "sleep 10 && /app/snapup -mode=mcp -output=/app/screenshots"
+    networks:
+      - snapup-network
+    stdin_open: true  # 保持 stdin 打开，MCP 协议需要
+    tty: true         # 分配伪终端
+    profiles:
+      - mcp           # 使用 profile，默认不启动
+
 networks:
   snapup-network:
     driver: bridge

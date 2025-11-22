@@ -91,6 +91,8 @@ make run
 
 SnapUp 支持作为 MCP (Model Context Protocol) 服务器运行，可以被 Claude Desktop 等 AI 助手调用，为大模型提供网页截图能力。
 
+#### 本地运行 MCP 模式
+
 ```bash
 # 运行 MCP 模式
 ./snapup -mode=mcp -output ./screenshots
@@ -99,7 +101,7 @@ SnapUp 支持作为 MCP (Model Context Protocol) 服务器运行，可以被 Cla
 make run-mcp
 ```
 
-**配置 Claude Desktop:**
+**配置 Claude Desktop (本地模式):**
 
 编辑配置文件（macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`）：
 
@@ -114,9 +116,53 @@ make run-mcp
 }
 ```
 
+#### 使用 Docker 运行 MCP 模式
+
+```bash
+# 启动 MCP 服务（包含 Chrome 容器）
+docker-compose --profile mcp up -d
+
+# 查看 MCP 服务日志
+docker-compose logs -f snapup-mcp
+
+# 中国用户可使用国内镜像源加速构建
+docker-compose -f docker-compose.cn.yml --profile mcp up -d
+```
+
+**配置 Claude Desktop (Docker 模式):**
+
+使用 Docker Compose 命令连接：
+
+```json
+{
+  "mcpServers": {
+    "snapup": {
+      "command": "docker-compose",
+      "args": [
+        "exec",
+        "-T",
+        "snapup-mcp",
+        "/app/snapup",
+        "-mode=mcp",
+        "-output=/app/screenshots"
+      ],
+      "cwd": "/path/to/snapup"
+    }
+  }
+}
+```
+
+**说明**:
+- MCP 服务使用 Docker Compose Profile 特性，默认不启动
+- 需要显式指定 `--profile mcp` 来启动 MCP 容器
+- `-T` 参数禁用伪终端，适用于 stdin/stdout 通信
+- `cwd` 指向 docker-compose.yml 所在目录
+
 配置完成后，重启 Claude Desktop，你就可以在对话中要求 Claude 帮你截取网页了！
 
-**详细使用指南**: 查看 [MCP_USAGE.md](./MCP_USAGE.md) 了解完整的 MCP 功能和使用方法。
+**详细使用指南**: 
+- [MCP 使用指南](./docs/MCP_USAGE.md) - 完整的 MCP 功能和使用方法
+- [Docker MCP 部署](./docs/DOCKER_MCP.md) - Docker 运行 MCP Server 的详细说明
 
 ## 配置
 

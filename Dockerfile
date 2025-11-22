@@ -1,8 +1,15 @@
 # 构建阶段
 FROM golang:1.21-alpine AS builder
 
+# 构建参数
+ARG GOPROXY=""
+
 # 设置工作目录
 WORKDIR /app
+
+# 如果提供了 GOPROXY，则设置 Go 代理
+ENV GOPROXY=${GOPROXY}
+ENV GO111MODULE=on
 
 # 复制 go mod 文件
 COPY go.mod go.sum ./
@@ -35,8 +42,13 @@ COPY --from=builder /app/snapup .
 # 创建截图输出目录
 RUN mkdir -p /app/screenshots
 
+# 环境变量配置
+ENV RUN_MODE=http
+ENV SERVER_PORT=8080
+ENV OUTPUT_DIR=/app/screenshots
+
 # 暴露端口
 EXPOSE 8080
 
-# 运行应用
-CMD ["./snapup", "-mode=http", "-port=8080", "-output=/app/screenshots"]
+# 运行应用（使用 shell 形式以支持环境变量）
+CMD ./snapup -mode=${RUN_MODE} -port=${SERVER_PORT} -output=${OUTPUT_DIR}
