@@ -1,0 +1,105 @@
+# ======================================
+# frp 客户端配置模板
+# ======================================
+# 
+# 使用说明:
+# 1. 将 serverAddr 替换为您的 frp 服务端地址
+# 2. 将 auth.token 替换为您的认证 token
+# 3. 根据需要选择 TCP 或 HTTP 代理模式
+# 4. 运行: docker-compose -f docker-compose.tunnel.yml up -d
+#
+# 快速配置: 运行 ./setup-tunnel.sh 自动生成配置
+# ======================================
+
+# === 服务端连接配置 ===
+serverAddr = "your-frp-server.com"  # 替换: 您的 frp 服务端 IP 或域名
+serverPort = 7000                    # 替换: frp 服务端端口（默认 7000）
+
+# === 认证配置 ===
+auth.token = "your-secret-token-here"  # 替换: 与服务端一致的认证 token（请使用强密码）
+
+# === 连接保持配置 ===
+# 心跳间隔和超时设置，防止长时间无数据传输时连接断开
+# heartbeatInterval = 30
+# heartbeatTimeout = 90
+
+# === 日志配置 ===
+# log.to = "/var/log/frpc.log"
+# log.level = "info"
+# log.maxDays = 3
+
+# ======================================
+# 代理配置 - 请选择下面的一种方式
+# ======================================
+
+# --- 方式 1: TCP 直连模式（推荐） ---
+# 适用场景: 直接通过 IP:端口 访问
+# 访问方式: ws://your-server-ip:9222
+[[proxies]]
+name = "chrome-ws-tcp"
+type = "tcp"
+localIP = "chrome"        # Docker 网络中的 chrome 容器
+localPort = 9222          # Chrome 内部端口
+remotePort = 9222         # 公网暴露端口（可修改为其他端口）
+
+# 可选: 限制带宽
+# transport.bandwidthLimit = "1MB"
+# transport.bandwidthLimitMode = "server"
+
+# --- 方式 2: HTTP 域名模式 ---
+# 适用场景: 使用域名访问，可配合 HTTPS
+# 访问方式: ws://chrome.your-domain.com 或 wss://chrome.your-domain.com
+# 注意: 需要在 frps 配置 vhostHTTPPort
+# [[proxies]]
+# name = "chrome-ws-http"
+# type = "http"
+# localIP = "chrome"
+# localPort = 9222
+# customDomains = ["chrome.your-domain.com"]  # 替换为您的域名
+# 
+# # HTTP 基础认证（可选，增加安全性）
+# httpUser = "admin"
+# httpPassword = "your-password"
+
+# --- 方式 3: HTTPS 域名模式（最安全） ---
+# 适用场景: 需要加密传输
+# 访问方式: wss://chrome.your-domain.com
+# 注意: 需要在 frps 配置 vhostHTTPSPort 和 SSL 证书
+# [[proxies]]
+# name = "chrome-ws-https"
+# type = "https"
+# localIP = "chrome"
+# localPort = 9222
+# customDomains = ["chrome.your-domain.com"]
+
+# ======================================
+# 额外服务配置（可选）
+# ======================================
+
+# 如果需要同时穿透 SnapUp Web 服务
+# [[proxies]]
+# name = "snapup-web"
+# type = "http"
+# localIP = "snapup"
+# localPort = 8080
+# customDomains = ["snapup.your-domain.com"]
+
+# ======================================
+# 使用示例
+# ======================================
+#
+# 配置完成后:
+#
+# 1. TCP 模式测试:
+#    curl http://your-server-ip:9222/json/version
+#
+# 2. HTTP 模式测试:
+#    curl http://chrome.your-domain.com/json/version
+#
+# 3. 在代码中使用:
+#    Go:     chromedp.NewRemoteAllocator(ctx, "ws://your-server-ip:9222")
+#    Python: chrome_options.add_experimental_option("debuggerAddress", "your-server-ip:9222")
+#
+# 详细文档: docs/TUNNEL_SETUP.md
+# ======================================
+

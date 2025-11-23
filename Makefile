@@ -1,4 +1,4 @@
-.PHONY: build run run-mcp clean docker docker-run docker-stop docker-cn docker-run-cn docker-stop-cn docker-mcp-start docker-mcp-stop docker-mcp-restart docker-mcp-logs docker-mcp-status docker-mcp-build docker-mcp-start-cn test deps fmt lint help
+.PHONY: build run run-mcp clean docker docker-run docker-stop docker-cn docker-run-cn docker-stop-cn docker-mcp-start docker-mcp-stop docker-mcp-restart docker-mcp-logs docker-mcp-status docker-mcp-build docker-mcp-start-cn test deps fmt lint help tunnel-setup tunnel-test tunnel-frp tunnel-cloudflare tunnel-nginx tunnel-stop
 
 # 构建应用
 build:
@@ -86,6 +86,57 @@ fmt:
 lint:
 	go vet ./...
 
+# 内网穿透配置向导
+tunnel-setup:
+	@./setup-tunnel.sh
+
+# 测试内网穿透连接
+tunnel-test:
+	@if [ -z "$(URL)" ]; then \
+		echo "用法: make tunnel-test URL=http://your-server-ip:9222"; \
+		echo "或: make tunnel-test URL=https://chrome.your-domain.com"; \
+		exit 1; \
+	fi
+	@./test-tunnel.sh $(URL)
+
+# 启动 frp 内网穿透
+tunnel-frp:
+	docker-compose -f docker-compose.tunnel.yml up -d
+	@echo "frp 内网穿透已启动"
+	@echo "查看日志: make tunnel-logs"
+
+# 启动 Cloudflare Tunnel
+tunnel-cloudflare:
+	docker-compose -f docker-compose.cloudflare.yml up -d
+	@echo "Cloudflare Tunnel 已启动"
+	@echo "查看日志: make tunnel-logs"
+
+# 启动 Nginx + 内网穿透
+tunnel-nginx:
+	docker-compose -f docker-compose.nginx-tunnel.yml up -d
+	@echo "Nginx + 内网穿透已启动"
+	@echo "查看日志: make tunnel-logs"
+
+# 查看内网穿透日志
+tunnel-logs:
+	@if docker ps | grep -q snapup-frpc; then \
+		docker-compose -f docker-compose.tunnel.yml logs -f frpc; \
+	elif docker ps | grep -q snapup-cloudflared; then \
+		docker-compose -f docker-compose.cloudflare.yml logs -f cloudflared; \
+	elif docker ps | grep -q snapup-nginx-ws; then \
+		docker-compose -f docker-compose.nginx-tunnel.yml logs -f; \
+	else \
+		echo "没有运行中的内网穿透服务"; \
+	fi
+
+# 停止内网穿透服务
+tunnel-stop:
+	@echo "停止所有内网穿透服务..."
+	@docker-compose -f docker-compose.tunnel.yml down 2>/dev/null || true
+	@docker-compose -f docker-compose.cloudflare.yml down 2>/dev/null || true
+	@docker-compose -f docker-compose.nginx-tunnel.yml down 2>/dev/null || true
+	@echo "内网穿透服务已停止"
+
 # 帮助
 help:
 	@echo "可用命令:"
@@ -118,3 +169,16 @@ help:
 	@echo "  make deps               - 下载依赖"
 	@echo "  make fmt                - 格式化代码"
 	@echo "  make lint               - 代码检查"
+	@echo ""
+	@echo "内网穿透命令:"
+	@echo "  make tunnel-setup       - 运行配置向导"
+	@echo "  make tunnel-frp         - 启动 frp 内网穿透"
+	@echo "  make tunnel-cloudflare  - 启动 Cloudflare Tunnel"
+	@echo "  make tunnel-nginx       - 启动 Nginx + 内网穿透"
+	@echo "  make tunnel-logs        - 查看内网穿透日志"
+	@echo "  make tunnel-stop        - 停止所有内网穿透服务"
+	@echo "  make tunnel-test URL=<地址> - 测试内网穿透连接"
+	@echo ""
+	@echo "示例:"
+	@echo "  make tunnel-test URL=http://your-server-ip:9222"
+	@echo "  make tunnel-test URL=https://chrome.your-domain.com"

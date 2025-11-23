@@ -1,0 +1,56 @@
+# Docker Compose 配置 - 使用 Cloudflare Tunnel
+version: '3.8'
+
+services:
+  chrome:
+    build:
+      context: .
+      dockerfile: Dockerfile.chrome
+    image: snapup-chrome:latest
+    container_name: snapup-chrome
+    restart: unless-stopped
+    # 不需要暴露端口到主机
+    shm_size: '2gb'
+    networks:
+      - snapup-network
+    healthcheck:
+      test: ["NONE"]
+
+  # Cloudflare Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: snapup-cloudflared
+    restart: unless-stopped
+    networks:
+      - snapup-network
+    depends_on:
+      - chrome
+    command: tunnel --no-autoupdate run --token YOUR_TUNNEL_TOKEN
+    # 或者使用配置文件方式
+    # volumes:
+    #   - ./cloudflared-config.yml:/etc/cloudflared/config.yml:ro
+    # command: tunnel --config /etc/cloudflared/config.yml run
+
+  snapup:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: snapup
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./screenshots:/app/screenshots
+    environment:
+      - PORT=8080
+      - CHROME_WS_URL=ws://chrome:9222
+    depends_on:
+      - chrome
+    command: sh -c "sleep 10 && /app/snapup -mode=http -port=8080 -output=/app/screenshots"
+    networks:
+      - snapup-network
+    restart: unless-stopped
+
+networks:
+  snapup-network:
+    driver: bridge
+

@@ -163,6 +163,7 @@ docker-compose -f docker-compose.cn.yml --profile mcp up -d
 **详细使用指南**: 
 - [MCP 使用指南](./docs/MCP_USAGE.md) - 完整的 MCP 功能和使用方法
 - [Docker MCP 部署](./docs/DOCKER_MCP.md) - Docker 运行 MCP Server 的详细说明
+- [内网穿透配置](./docs/TUNNEL_SETUP.md) - 将 Chrome WebSocket 暴露到公网的详细教程
 
 ## 配置
 
@@ -177,6 +178,8 @@ docker-compose -f docker-compose.cn.yml --profile mcp up -d
 
 **本地部署**：不设置 `CHROME_WS_URL`，程序会自动启动本地 Chrome 实例
 
+**远程部署**：可以通过内网穿透将 Chrome WebSocket 暴露到公网，详见 [内网穿透配置指南](./docs/TUNNEL_SETUP.md)
+
 ### Docker Compose 配置
 
 默认的 `docker-compose.yml` 包含两个服务：
@@ -190,6 +193,59 @@ docker-compose -f docker-compose.cn.yml --profile mcp up -d
    - 端口：8080（HTTP 服务）
    - 依赖：等待 Chrome 容器健康后启动
    - 卷挂载：`./screenshots` 目录用于存储截图
+
+### 内网穿透（远程访问 Chrome）
+
+如果需要从公网访问 Chrome WebSocket（例如在云端运行脚本连接本地 Chrome），可以使用内网穿透工具。
+
+#### 快速开始
+
+我们提供了三种内网穿透方案：
+
+**方案 1：使用 frp（推荐，适合企业）**
+
+```bash
+# 1. 配置 frpc.toml（填写您的 frp 服务端信息）
+# 2. 启动服务
+docker-compose -f docker-compose.tunnel.yml up -d
+
+# 3. 测试连接
+curl http://your-server-ip:9222/json/version
+```
+
+**方案 2：使用 Cloudflare Tunnel（免费，适合个人）**
+
+```bash
+# 1. 创建 Cloudflare Tunnel 并获取 token
+cloudflared tunnel create snapup-chrome
+
+# 2. 编辑 docker-compose.cloudflare.yml，填写 token
+# 3. 启动服务
+docker-compose -f docker-compose.cloudflare.yml up -d
+
+# 4. 访问
+# 使用域名: wss://chrome.your-domain.com
+```
+
+**方案 3：使用 Nginx + 穿透（灵活，可添加认证）**
+
+```bash
+# 启动 Nginx 反向代理 + frp
+docker-compose -f docker-compose.nginx-tunnel.yml up -d
+```
+
+**详细配置步骤**：查看 [内网穿透完整教程](./docs/TUNNEL_SETUP.md)
+
+#### 安全提示
+
+⚠️ **重要**：将 Chrome DevTools 暴露到公网存在安全风险，建议：
+
+- 使用认证（HTTP Basic Auth 或更强的认证机制）
+- 配置 IP 白名单
+- 使用 HTTPS/WSS 加密连接
+- 定期更换访问凭证
+
+详细安全配置请参考 [内网穿透配置指南](./docs/TUNNEL_SETUP.md) 中的"安全建议"章节。
 
 ## 使用说明
 

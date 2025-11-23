@@ -1,0 +1,88 @@
+# Docker Compose 配置 - 带内网穿透支持
+version: '3.8'
+
+services:
+  chrome:
+    build:
+      context: .
+      dockerfile: Dockerfile.chrome
+    image: snapup-chrome:latest
+    container_name: snapup-chrome
+    restart: unless-stopped
+    ports:
+      - "9222:9222"  # 本地访问端口
+    shm_size: '2gb'
+    networks:
+      - snapup-network
+    healthcheck:
+      test: ["NONE"]
+
+  # frp 客户端 - 用于内网穿透
+  frpc:
+    image: snowdreamtech/frpc:latest
+    container_name: snapup-frpc
+    restart: unless-stopped
+    volumes:
+      - ./frpc.toml:/etc/frp/frpc.toml:ro
+    networks:
+      - snapup-network
+    depends_on:
+      - chrome
+    command: ["frpc", "-c", "/etc/frp/frpc.toml"]
+
+  snapup:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: snapup
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./screenshots:/app/screenshots
+    environment:
+      - PORT=8080
+      - CHROME_WS_URL=ws://chrome:9222
+    depends_on:
+      - chrome
+    command: sh -c "sleep 10 && /app/snapup -mode=http -port=8080 -output=/app/screenshots"
+    networks:
+      - snapup-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # SnapUp MCP Server（按需启动）
+  snapup-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: snapup-mcp
+    restart: "no"
+    environment:
+      - RUN_MODE=mcp
+      - OUTPUT_DIR=/app/screenshots
+      - CHROME_WS_URL=ws://chrome:9222
+    volumes:
+      - ./screenshots:/app/screenshots
+    depends_on:
+      - chrome
+    command: sh -c "sleep 10 && /app/snapup -mode=mcp -output=/app/screenshots"
+    networks:
+      - snapup-network
+    stdin_open: true
+    tty: true
+    profiles:
+      - mcp
+
+networks:
+  snapup-network:
+    driver: bridge
+
+volumes:
+  screenshots:
+    driver: local
+
